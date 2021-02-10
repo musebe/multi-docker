@@ -1,0 +1,24 @@
+language: generic
+sudo: required
+services:
+  - docker
+before_install:
+  - docker build -t musebe/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true musebe/react-test npm test
+
+after_success:
+  - docker build -t musebe/multi-client ./client
+  - docker build -t musebe/multi-nginx ./nginx
+  - docker build -t musebe/multi-server ./server
+  - docker build -t musebe/musebe-worker ./worker
+
+# Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+# Take those images and push them to docker hub
+  - docker push musebe/multi-client
+  - docker push musebe/multi-nginx
+  - docker push musebe/multi-server
+  - docker push musebe/multi-worker
